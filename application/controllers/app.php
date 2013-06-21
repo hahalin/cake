@@ -1,0 +1,201 @@
+<?php
+if (!defined('BASEPATH'))
+	exit('No direct script access allowed');
+
+class app extends CI_Controller {
+
+	public function __construct() {
+		parent::__construct();
+		$this->load->library('jsondata');
+		//$this -> load -> model('appcfg_model');
+	}
+	
+	public function urlprvw()
+	{
+		$this -> load -> helper('form');
+		
+		$this -> load -> view('linkpreview');
+	}
+	function geturlinfo()
+	{
+		$this -> load -> helper('searchUrls');
+		$ary=json_decode(getUrlinfo($_GET["text"]));
+		//print_r($ary->urls);
+		//$data['idx']=0;
+		$data['dt']=date('Y/m/d', time());
+		$data['url']=$ary->urls;
+		$data['dsc']=$ary->description;
+		try
+		{
+		  $this->db->insert('urlrepo',$data);
+		}
+		catch(Exception $ex)
+		{
+		  echo $ex;
+		}
+	}
+	function geturlpreview()
+	{
+	  $this -> load -> helper('searchUrls');
+	   
+	  echo searchUrls($_GET["text"]);
+	}
+	
+	public function cake2()
+	{
+		$this -> load -> view('cake2');
+	}
+	public function index() {
+
+		$user_id = $this->session->userdata('id');
+		$user_name = $this->session->userdata('name');
+    	$is_admin = $this->session->userdata('is_admin');
+    	$isLoggedIn = $this->session->userdata('isLoggedIn');
+                
+        /*
+        $isLoggedIn =1;
+        $is_admin=0;	
+        $user_id=2;
+        $user_name="TestUser";
+		 */	
+		
+        $data['user_id']=$user_id;
+		$data['user_name']=$user_name;
+		$data['is_admin']=$is_admin;
+		$data['isLoggedIn']=$isLoggedIn;
+
+		$this -> load -> helper('form');
+		$data['error']=$this->session->flashdata('error');
+		//$data['error']=$this->session->userdata('error');
+		$this -> load -> view('main',$data);
+
+		return;
+
+		print '<br>';
+		print_r($this->session->userdata);
+		print '</br>';
+				
+		
+		$options = array(
+		  'code' => $this -> input -> post('code'), 
+		  'v' => $this -> input -> post('v')
+		);
+
+		$this -> load -> helper('form');
+		$this -> load -> helper('url');
+		$this -> load -> library('form_validation');
+		$this->load->library('parser');
+
+		$this -> form_validation -> set_rules('code', 'Title', 'required');
+		$this -> form_validation -> set_rules('v', 'text', 'required');
+		
+		if ($this -> form_validation -> run() == FALSE) {
+			$this -> load -> view('app/add');
+		} else {
+			$appcfg = $this -> appcfg_model -> add($options);
+			
+			$data=array('result'=>$appcfg);
+			//$data['baseurl']=base_url();
+			//$this->parser->parse('app/frmsuccess',$data);
+			$this -> load -> view('app/frmsuccess',$data);
+		}
+
+		//$appcfg = $this -> appcfg_model -> add($options);
+		
+		return;
+
+
+	}
+	
+	
+	public function getcategory($pid=0)
+	{
+		$this->load->model('category_m');
+		$list=$this->category_m->list_category($pid);
+		$obj=$this->jsondata->datawrapper($list);
+		print json_encode($obj);
+	}
+	
+	public function printsess()
+	{
+		$this -> load -> library('session');
+		print '<pre>';
+		print_r($this->session->userdata);
+		print '</pre>';
+	}
+
+	public function setstyle()
+	{
+		$s=urlencode($this->input->post('style'));
+		$this -> load -> library('session');
+		$this->session->set_userdata('style',$s);
+	} 
+	public function getstyle()
+	{
+		$this -> load -> library('session');
+		print $this->session->userdata('style');
+		return $this->session->userdata('style');
+	}
+
+	public function prodlist()
+	{
+		//$this -> load -> helper('url');
+		$this->load->library('parser');
+		$this->load->view('prodlist');
+		
+	}
+	
+	public function addpid($pid)
+	{
+		$this -> load -> library('session');
+		$newdata = array('username' => 'frank', 'email' => 'frank@a.b.c', 'logged_in' => TRUE);
+		$list=array();
+		$msg="initial,";
+		if ($this->session->userdata('pidlist'))
+		{
+			$list=$this->session->userdata('pidlist');
+		}
+		if (!array_key_exists($pid,$list))
+		{
+			$list[$pid]=1;
+			$msg .="add";
+		}
+		else 
+		{
+			$list[$pid] +=1;
+			$msg .="modify";
+		}
+		$this -> session -> set_userdata('pidlist',$list);
+		
+		print "{success:true,msg:'".$msg."'}";
+		
+		
+	}
+	
+	public function foo($p="default")
+	{
+	   print "foo";
+	}
+
+	public function testq()
+	{
+		$this->load->model('appcfg_model');
+		$this->load->model('another_model');
+		print_r ($this -> appcfg_model ->q());
+	}
+
+	
+
+	public function add() {
+
+		$this -> load -> helper('form', 'url');
+		$this -> load -> library('form_validation');
+		$data['title'] = 'Create a appcfg item';
+
+		$this -> load -> view('app/add');
+
+		//print "indexa";
+		return;
+	}
+
+}
