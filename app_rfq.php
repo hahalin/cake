@@ -17,6 +17,45 @@ class App extends CI_Controller {
 
 	function add($id = 0) {
 		$this -> output -> enable_profiler(false);
+		
+		$list=array();
+		$this->load->library('session');
+		if ($this->session->userdata('rfq'))
+		{
+			$list=$this->session->userdata('rfq');		
+		}
+	
+		$o = new stdClass;
+		if ($id==0)
+		{
+			if (isset($_POST['pid']))
+			{
+				$id=$_POST['pid'];
+			}
+		}
+		foreach ($list as $item)
+		{
+			//echo $item['id'].'</br>';
+			if ($item['id']==$id)
+			{
+				$o -> success = false;
+				$o -> msg = "exist";
+				echo json_encode($o, 1);
+				return;
+			}
+		}
+		
+		$list[]=array('id'=>$id);
+		
+		$this->session->set_userdata('rfq',$list);
+
+		$o->success=true;
+		echo json_encode($o,1);
+
+		return;
+		
+		
+		
 		$m = new rfq();
 		if (isset($_POST['pid'])) {
 			$id = $_POST['pid'];
@@ -63,6 +102,18 @@ class App extends CI_Controller {
 
 	function getcount() {
 		$this -> output -> enable_profiler(false);
+
+		$list=array();
+		$this->load->library('session');
+		if ($this->session->userdata('rfq'))
+		{
+			$list=$this->session->userdata('rfq');		
+		}
+		
+		echo count($list);
+		return;
+
+		
 		$m = new rfq();
 		echo $m -> count();
 	}
